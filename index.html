@@ -1,104 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cloud Race V2 - Pro Edition</title>
+    <title>Cloud Race V2 - Stabilized</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     <style>
         body { text-align: center; font-family: 'Segoe UI', sans-serif; background: #1e90ff; margin: 0; color: #333; overflow-x: hidden; }
-        
-        /* Arena Balap */
-        #race-track { 
-            position: relative; height: 60vh; width: 100%; 
-            background: linear-gradient(to bottom, #1e90ff, #87CEEB); 
-            overflow: hidden; border-bottom: 5px solid white;
-            display: flex; align-items: flex-end;
-        }
-
-        .player-visual { 
-            position: absolute; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            display: flex; flex-direction: column; align-items: center; width: 60px;
-        }
-        .char-icon { font-size: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-        .char-name { font-size: 11px; background: white; border-radius: 5px; padding: 2px 5px; font-weight: bold; margin-bottom: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); white-space: nowrap; }
-
-        /* Controller HP */
+        #race-track { position: relative; height: 60vh; width: 100%; background: linear-gradient(to bottom, #1e90ff, #87CEEB); overflow: hidden; border-bottom: 5px solid white; display: flex; align-items: flex-end; }
+        .player-visual { position: absolute; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; align-items: center; width: 60px; }
+        .char-icon { font-size: 40px; }
+        .char-name { font-size: 11px; background: white; border-radius: 5px; padding: 2px 5px; font-weight: bold; margin-bottom: 5px; white-space: nowrap; }
         #mobile-controller { padding: 20px; background: white; min-height: 40vh; border-radius: 30px 30px 0 0; margin-top: -20px; position: relative; z-index: 10; }
-        .question-box { background: #f1f2f6; padding: 20px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; font-size: 1.3rem; line-height: 1.4; }
-        .opt-btn { 
-            width: 100%; padding: 18px; margin: 8px 0; border: none; 
-            background: #2ed573; color: white; border-radius: 12px; 
-            font-size: 1.2rem; font-weight: bold; cursor: pointer;
-            box-shadow: 0 5px 0 #26af5a; transition: 0.1s;
-        }
-        .opt-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #26af5a; }
-
-        /* Host Controls */
-        #host-panel { position: fixed; top: 10px; left: 10px; z-index: 9999; display: none; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 10px; }
-        .btn-admin { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; color: white; margin: 0 5px; }
-        .btn-start { background: #2ed573; }
-        .btn-reset { background: #ff4757; }
-
-        /* Overlays */
-        #login-overlay, #waiting-overlay { 
-            position: fixed; inset: 0; background: white; z-index: 5000; 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-        }
-        #waiting-overlay { background: rgba(255,255,255,0.95); display: none; }
-        input { padding: 15px; width: 80%; font-size: 1.2rem; border-radius: 10px; border: 2px solid #ccc; margin-bottom: 10px; text-align: center; }
-        
-        #leaderboard { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); color: white; 
-            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 6000;
-        }
-
-        /* Responsive PC Monitor */
-        @media (min-width: 1024px) {
-            #race-track { height: 90vh; }
-            #mobile-controller { display: none; }
-            .char-icon { font-size: 60px; }
-            .char-name { font-size: 16px; }
-        }
+        .question-box { background: #f1f2f6; padding: 20px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; font-size: 1.2rem; }
+        .opt-btn { width: 100%; padding: 15px; margin: 5px 0; border: none; background: #2ed573; color: white; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #26af5a; }
+        .opt-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #26af5a; }
+        #host-panel { position: fixed; top: 10px; left: 10px; z-index: 9999; display: none; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        #login-overlay, #waiting-overlay { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #leaderboard { position: fixed; inset: 0; background: rgba(0,0,0,0.9); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 6000; }
+        @media (min-width: 1024px) { #race-track { height: 90vh; } #mobile-controller { display: none; } .char-icon { font-size: 60px; } }
     </style>
 </head>
 <body>
 
 <div id="host-panel">
-    <button class="btn-admin btn-start" onclick="startGame()">🏁 START GAME</button>
-    <button class="btn-admin btn-reset" onclick="resetGame()">🔄 RESET ALL</button>
+    <button onclick="startGame()" style="background:#2ed573; color:white; border:none; padding:10px; border-radius:5px;">🏁 START GAME</button>
+    <button onclick="resetGame()" style="background:#ff4757; color:white; border:none; padding:10px; border-radius:5px;">🔄 RESET ALL</button>
 </div>
 
 <div id="login-overlay">
-    <h1 style="margin-bottom: 5px;">☁️ CLOUD RACE V2</h1>
-    <p style="color: #666;">Masukkan namamu untuk bergabung</p>
-    <input type="text" id="input-nama" placeholder="Contoh: Budi Santoso">
-    <button class="opt-btn" onclick="joinGame()" style="width: 250px;">GABUNG SEKARANG</button>
+    <h1>☁️ CLOUD RACE V2</h1>
+    <input type="text" id="input-nama" placeholder="Ketik namamu..." style="padding:15px; width:70%; font-size:1.2rem; margin-bottom:15px;">
+    <button class="opt-btn" onclick="joinGame()" style="width: 200px;">MASUK BALAPAN</button>
 </div>
 
-<div id="waiting-overlay">
-    <div class="loader">🌀</div>
-    <h2>Berhasil Bergabung!</h2>
-    <p>Menunggu Host memulai permainan...</p>
+<div id="waiting-overlay" style="display:none;">
+    <h2>Sip, Sudah Masuk!</h2>
+    <p>Tunggu Host menekan START...</p>
 </div>
 
 <div id="leaderboard">
-    <h1>🏆 RANKING AKHIR 🏆</h1>
-    <div id="rank-list" style="width: 400px; max-width: 90%; background: white; color: black; border-radius: 20px; padding: 20px;"></div>
-    <p>Tekan Reset di layar Host untuk mengulang</p>
+    <h1>🏆 HASIL AKHIR 🏆</h1>
+    <div id="rank-list" style="width: 350px; background: white; color: black; border-radius: 15px; padding: 20px;"></div>
+    <p style="margin-top:20px;">Host akan mereset sebentar lagi...</p>
 </div>
 
 <div id="race-track"></div>
 
 <div id="mobile-controller">
     <div id="game-ui" style="display:none;">
-        <div class="question-box" id="q-text">Mempersiapkan soal...</div>
+        <div class="question-box" id="q-text">Mengambil soal...</div>
         <div id="options-container"></div>
     </div>
 </div>
 
 <script>
-    // --- KONFIGURASI FIREBASE DIPERBARUI ---
     const firebaseConfig = {
         apiKey: "AIzaSyABP2VWkLjNjuiy7ELHf8c8j5sTrjr04dE",
         authDomain: "cloudgamev2.firebaseapp.com",
@@ -115,23 +71,13 @@
     const urlParams = new URLSearchParams(window.location.search);
     const isHost = urlParams.get('role') === 'host';
     
-    // playerID unik per browser agar tidak bentrok
-    let myID = localStorage.getItem('playerID_v2_new') || "P" + Math.floor(Math.random()*1000000);
-    localStorage.setItem('playerID_v2_new', myID);
-
+    let myID = "P" + Math.floor(Math.random()*1000000); 
     let myName = "";
     let myStep = 0;
     let daftarSoal = [];
-    const icons = ["🐦", "🐤", "🦄", "🦊", "🐱", "🐶", "🐭", "🐹", "🐰", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🐼", "🐨", "🦀", "🦞", "🦕", "🐝", "🦋"];
+    const icons = ["🐦", "🐤", "🦄", "🦊", "🐱", "🐶", "🐰", "🐯", "🐸", "🐼"];
 
-    if (isHost) {
-        document.getElementById('host-panel').style.display = 'block';
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('mobile-controller').style.display = 'none';
-    }
-
-    // --- FUNGSI CORE ---
-
+    // 1. MUAT SOAL DARI soal.csv
     async function loadSoal() {
         try {
             const res = await fetch('soal.csv');
@@ -141,69 +87,70 @@
                 const k = l.split(',');
                 return { q: k[0].trim(), o: [k[1].trim(), k[2].trim(), k[3].trim()], a: k[4].trim() };
             });
-            if (!isHost) renderSoal();
-        } catch (e) { alert("Gagal memuat soal.csv!"); }
+            console.log("Soal siap!");
+        } catch (e) { 
+            document.getElementById('q-text').innerText = "Gagal memuat soal.csv!";
+        }
+    }
+
+    loadSoal();
+
+    if (isHost) {
+        document.getElementById('host-panel').style.display = 'block';
+        document.getElementById('login-overlay').style.display = 'none';
     }
 
     function joinGame() {
         myName = document.getElementById('input-nama').value.trim();
-        if(!myName) return alert("Nama tidak boleh kosong!");
+        if(!myName) return alert("Isi nama dulu!");
         
-        const myIcon = icons[Math.floor(Math.random()*icons.length)];
         db.ref('players/' + myID).set({
             name: myName,
             pos: 20,
-            icon: myIcon,
+            icon: icons[Math.floor(Math.random()*icons.length)],
             step: 0,
             finished: false
         });
 
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('waiting-overlay').style.display = 'flex';
-        loadSoal();
     }
 
-    // --- GAME STATE LISTENERS ---
-
+    // 2. MONITOR STATUS GAME
     db.ref('status').on('value', snap => {
         const status = snap.val();
-        if (status === 'playing' && !isHost) {
+        if (status === 'playing' && !isHost && myName !== "") {
             document.getElementById('waiting-overlay').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
-        } else if (status === 'waiting' && !isHost) {
-            if (myName) document.getElementById('waiting-overlay').style.display = 'flex';
-            document.getElementById('game-ui').style.display = 'none';
-            document.getElementById('leaderboard').style.display = 'none';
-            myStep = 0;
-            renderSoal();
+            renderSoal(); // Pastikan render dipanggil saat start
+        } else if (!status || status === 'waiting') {
+            if (!isHost) location.reload(); // Reset otomatis semua peserta jika Host reset
         }
     });
 
-    function startGame() {
-        db.ref('status').set('playing');
-    }
+    function startGame() { db.ref('status').set('playing'); }
 
     function resetGame() {
-        if(confirm("Hapus semua pemain dan reset permainan?")) {
-            db.ref('players').remove();
-            db.ref('status').set('waiting');
+        if(confirm("Hapus semua data balapan?")) {
+            db.ref('/').set({ status: 'waiting' });
             location.reload();
         }
     }
 
-    // --- GAMEPLAY ---
-
+    // 3. LOGIKA SOAL
     function renderSoal() {
         if(myStep >= daftarSoal.length) {
-            document.getElementById('q-text').innerHTML = "<h2 style='margin:0; color:#2ed573;'>FINISH! 🏁<br>Cek layar utama!</h2>";
+            document.getElementById('q-text').innerHTML = "FINISH! 🏁<br>Lihat Layar Utama";
             document.getElementById('options-container').innerHTML = "";
-            db.ref('players/' + myID + '/finished').set(true);
+            db.ref('players/' + myID).update({ finished: true });
             return;
         }
+        
         const data = daftarSoal[myStep];
         document.getElementById('q-text').innerText = data.q;
         const container = document.getElementById('options-container');
         container.innerHTML = "";
+        
         data.o.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = "opt-btn";
@@ -211,67 +158,51 @@
             btn.onclick = () => {
                 if(opt.toLowerCase() === data.a.toLowerCase()) {
                     myStep++;
-                    db.ref('players/' + myID).transaction(p => {
-                        if(p) { p.pos += 60; p.step = myStep; }
-                        return p;
+                    db.ref('players/' + myID).update({
+                        pos: 20 + (myStep * 60),
+                        step: myStep
                     });
                     renderSoal();
                 } else {
                     btn.style.background = "#ff4757";
-                    setTimeout(() => { btn.style.background = "#2ed573"; }, 500);
+                    setTimeout(() => btn.style.background = "#2ed573", 500);
                 }
             };
             container.appendChild(btn);
         });
     }
 
-    // Sinkronisasi Arena
+    // 4. UPDATE ARENA & LEADERBOARD
     db.ref('players').on('value', snapshot => {
         const players = snapshot.val();
         const track = document.getElementById('race-track');
         track.innerHTML = "";
-        
-        if(!players) {
-            if (!isHost && myName !== "") {
-                location.reload();
-            }
-            return;
-        }
+        if(!players) return;
 
         const entries = Object.entries(players);
         entries.forEach(([id, data], index) => {
+            if(!data.name) return; // Mencegah undefined
             const spacing = 100 / (entries.length + 1);
             const pDiv = document.createElement('div');
             pDiv.className = "player-visual";
             pDiv.style.left = (spacing * (index + 1)) + "%";
-            pDiv.style.marginLeft = "-30px";
-            pDiv.style.bottom = (data.pos || 20) + "px";
-            pDiv.innerHTML = `
-                <div class="char-name">${data.name || 'Anonymous'}</div>
-                <div class="char-icon">${data.icon || '👤'}</div>
-            `;
+            pDiv.style.bottom = data.pos + "px";
+            pDiv.innerHTML = `<div class="char-name">${data.name}</div><div class="char-icon">${data.icon}</div>`;
             track.appendChild(pDiv);
         });
 
-        // Cek Papan Peringkat
-        const winners = entries
-            .filter(e => e[1].finished)
-            .sort((a, b) => b[1].step - a[1].step);
-            
-        if(winners.length > 0 && winners.length === entries.length) {
-            showLeaderboard(winners);
+        // Tampilkan leaderboard jika semua sudah finish
+        const allFinished = entries.every(e => e[1].finished);
+        if(allFinished && entries.length > 0) {
+            const sorted = entries.sort((a, b) => b[1].step - a[1].step);
+            document.getElementById('rank-list').innerHTML = sorted.map((w, i) => `
+                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+                    <b>#${i+1} ${w[1].name}</b> <span>${w[1].icon}</span>
+                </div>
+            `).join('');
+            document.getElementById('leaderboard').style.display = 'flex';
         }
     });
-
-    function showLeaderboard(winners) {
-        const list = document.getElementById('rank-list');
-        list.innerHTML = winners.map((w, i) => `
-            <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #eee; font-size:1.2rem">
-                <b>#${i+1} ${w[1].name}</b> <span>${w[1].icon}</span>
-            </div>
-        `).join('');
-        document.getElementById('leaderboard').style.display = 'flex';
-    }
 </script>
 </body>
 </html>
