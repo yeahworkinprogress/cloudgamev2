@@ -193,7 +193,9 @@
 
     function renderSoal() {
         if(myStep >= daftarSoal.length) {
-            document.getElementById('game-ui').innerHTML = "<h2>FINISH! 🏁<br>Cek layar utama!</h2>";
+            // PERBAIKAN 2: Hanya menargetkan anak elemen agar struktur #game-ui tidak hancur
+            document.getElementById('q-text').innerHTML = "<h2 style='margin:0; color:#2ed573;'>FINISH! 🏁<br>Cek layar utama!</h2>";
+            document.getElementById('options-container').innerHTML = "";
             db.ref('players/' + myID + '/finished').set(true);
             return;
         }
@@ -228,7 +230,13 @@
         const track = document.getElementById('race-track');
         track.innerHTML = "";
         
-        if(!players) return;
+        // PERBAIKAN 1: Auto-reload perangkat peserta jika Host mereset database
+        if(!players) {
+            if (!isHost && myName !== "") {
+                location.reload();
+            }
+            return;
+        }
 
         const entries = Object.entries(players);
         entries.forEach(([id, data], index) => {
