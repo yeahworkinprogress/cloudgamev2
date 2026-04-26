@@ -98,23 +98,26 @@
 </div>
 
 <script>
-    // --- KONFIGURASI FIREBASE ---
+    // --- KONFIGURASI FIREBASE DIPERBARUI ---
     const firebaseConfig = {
-        apiKey: "AIzaSyCIuO03IS3xOk-LrMP2DnzYHvguLT4-Rzc",
-        authDomain: "cloudgame-30a5d.firebaseapp.com",
-        databaseURL: "https://cloudgame-30a5d-default-rtdb.firebaseio.com",
-        projectId: "cloudgame-30a5d",
-        storageBucket: "cloudgame-30a5d.firebasestorage.app",
-        messagingSenderId: "744636805808",
-        appId: "1:744636805808:web:f1dd3123b48a538ca2c175"
+        apiKey: "AIzaSyABP2VWkLjNjuiy7ELHf8c8j5sTrjr04dE",
+        authDomain: "cloudgamev2.firebaseapp.com",
+        projectId: "cloudgamev2",
+        storageBucket: "cloudgamev2.firebasestorage.app",
+        messagingSenderId: "369609219804",
+        appId: "1:369609219804:web:5dd1e7ed51da5779571e19",
+        measurementId: "G-P2TXY9GF07",
+        databaseURL: "https://cloudgamev2-default-rtdb.firebaseio.com/"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const urlParams = new URLSearchParams(window.location.search);
     const isHost = urlParams.get('role') === 'host';
-    let myID = localStorage.getItem('playerID_v2') || "P" + Math.floor(Math.random()*1000000);
-    localStorage.setItem('playerID_v2', myID);
+    
+    // playerID unik per browser agar tidak bentrok
+    let myID = localStorage.getItem('playerID_v2_new') || "P" + Math.floor(Math.random()*1000000);
+    localStorage.setItem('playerID_v2_new', myID);
 
     let myName = "";
     let myStep = 0;
@@ -168,7 +171,6 @@
             document.getElementById('waiting-overlay').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
         } else if (status === 'waiting' && !isHost) {
-            // Jika di-reset oleh host
             if (myName) document.getElementById('waiting-overlay').style.display = 'flex';
             document.getElementById('game-ui').style.display = 'none';
             document.getElementById('leaderboard').style.display = 'none';
@@ -193,7 +195,6 @@
 
     function renderSoal() {
         if(myStep >= daftarSoal.length) {
-            // PERBAIKAN 2: Hanya menargetkan anak elemen agar struktur #game-ui tidak hancur
             document.getElementById('q-text').innerHTML = "<h2 style='margin:0; color:#2ed573;'>FINISH! 🏁<br>Cek layar utama!</h2>";
             document.getElementById('options-container').innerHTML = "";
             db.ref('players/' + myID + '/finished').set(true);
@@ -224,13 +225,12 @@
         });
     }
 
-    // Sinkronisasi Arena (Untuk Host & Peserta)
+    // Sinkronisasi Arena
     db.ref('players').on('value', snapshot => {
         const players = snapshot.val();
         const track = document.getElementById('race-track');
         track.innerHTML = "";
         
-        // PERBAIKAN 1: Auto-reload perangkat peserta jika Host mereset database
         if(!players) {
             if (!isHost && myName !== "") {
                 location.reload();
@@ -240,16 +240,15 @@
 
         const entries = Object.entries(players);
         entries.forEach(([id, data], index) => {
-            // Hitung posisi horizontal dinamis agar muat 22 orang
             const spacing = 100 / (entries.length + 1);
             const pDiv = document.createElement('div');
             pDiv.className = "player-visual";
             pDiv.style.left = (spacing * (index + 1)) + "%";
             pDiv.style.marginLeft = "-30px";
-            pDiv.style.bottom = data.pos + "px";
+            pDiv.style.bottom = (data.pos || 20) + "px";
             pDiv.innerHTML = `
-                <div class="char-name">${data.name}</div>
-                <div class="char-icon">${data.icon}</div>
+                <div class="char-name">${data.name || 'Anonymous'}</div>
+                <div class="char-icon">${data.icon || '👤'}</div>
             `;
             track.appendChild(pDiv);
         });
